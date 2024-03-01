@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
+	"sync"
 )
 
 func main() {
@@ -36,29 +38,17 @@ func play() {
 	var computerChoice int
 	var computerAction string
 	var winner string = ""
+	var wg sync.WaitGroup
 
-	fmt.Println("\n\n-----   Your Move   -----")
-	fmt.Println("1. Rock")
-	fmt.Println("2. Paper")
-	fmt.Println("3. Scissors")
-	fmt.Print("Move: ")
-	fmt.Scan(&playerChoice)
+	wg.Add(1)
+	go computerPlay(&computerChoice, &computerAction, &wg)
 
-	switch playerChoice {
-	case 1:
-		playerAction = "Rock"
-	case 2:
-		playerAction = "Paper"
-	case 3:
-		playerAction = "Scissors"
-	default:
-		panic("Invalid input entered")
-	}
+	fmt.Println("Computer Moving...")
 
-	computerChoice = rand.Intn(3) + 1
+	wg.Add(1)
+	go playerPlay(&playerChoice, &playerAction, &wg)
 
-	playerAction = getAction(playerChoice)
-	computerAction = getAction(computerChoice)
+	wg.Wait()
 
 	fmt.Printf("Player - %v vs %v - Computer\n", playerAction, computerAction)
 
@@ -75,6 +65,29 @@ func play() {
 	}
 
 	fmt.Printf("\n\n----- %v -----\n\n", winner)
+}
+
+func playerPlay(pc *int, pa *string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	var input string
+
+	fmt.Println("\n\n-----   Your Move   -----")
+	fmt.Println("1. Rock")
+	fmt.Println("2. Paper")
+	fmt.Println("3. Scissors")
+
+	fmt.Print("Move: ")
+	fmt.Scan(&input)
+
+	*pc, _ = strconv.Atoi(input)
+	*pa = getAction(*pc)
+}
+
+func computerPlay(cc *int, ca *string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	*cc = rand.Intn(3) + 1
+	*ca = getAction(*cc)
 }
 
 func getAction(chose int) string {
